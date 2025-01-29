@@ -1,24 +1,20 @@
-import Checkbox from '@/Components/Checkbox';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
-
-export default function Login({ status, canResetPassword, redirectUrl }) {
-
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
+export default function Login({redirectUrl}) {
     const { data, setData, post, processing, errors, reset } = useForm({
         email: '',
         password: '',
         redirectUrl: redirectUrl,
-        remember: false,
     });
 
+    const { csrf_token } = usePage().props;
 
     const submit = (e) => {
         e.preventDefault();
-
         post(route('login'), {
             onFinish: () => reset('password'),
         });
@@ -26,18 +22,20 @@ export default function Login({ status, canResetPassword, redirectUrl }) {
 
     return (
         <GuestLayout>
-            <Head title="Se Connecter" />
+            <Head title="Se connecter" />
 
-            {status && (
-                <div className="mb-4 text-sm font-medium text-indigo-600">
-                    {status}
-                </div>
-            )}
+            <div className="mb-6">
+                {/* Heading ajouté ici */}
+                <h1 className="text-2xl text-center font-semibold text-gray-800">Connexion à votre compte</h1>
+                <p className="mt-2 text-sm text-center text-gray-600">Entrez vos informations pour accéder à votre compte.</p>
+            </div>
 
             <form onSubmit={submit}>
+                {/* Champ CSRF Token */}
+                <input type="hidden" name="_token" value={csrf_token} />
+
                 <div>
                     <InputLabel htmlFor="email" value="Email" />
-
                     <TextInput
                         id="email"
                         type="email"
@@ -47,14 +45,13 @@ export default function Login({ status, canResetPassword, redirectUrl }) {
                         autoComplete="username"
                         isFocused={true}
                         onChange={(e) => setData('email', e.target.value)}
+                        required
                     />
-
                     <InputError message={errors.email} className="mt-2" />
                 </div>
 
                 <div className="mt-4">
                     <InputLabel htmlFor="password" value="Mot de passe" />
-
                     <TextInput
                         id="password"
                         type="password"
@@ -63,44 +60,47 @@ export default function Login({ status, canResetPassword, redirectUrl }) {
                         className="mt-1 block w-full"
                         autoComplete="current-password"
                         onChange={(e) => setData('password', e.target.value)}
+                        required
                     />
-
                     <InputError message={errors.password} className="mt-2" />
                 </div>
 
-                <div className="mt-4 block">
-                    <label className="flex items-center">
-                        <Checkbox
-                            name="remember"
-                            checked={data.remember}
-                            onChange={(e) =>
-                                setData('remember', e.target.checked)
-                            }
-                        />
-                        <span className="ms-2 text-sm text-gray-600">
-                            Se souvenir de moi
-                        </span>
-                    </label>
+                <div className="mt-4 flex items-center justify-between">
+                    <div className="flex items-center">
+                        <label htmlFor="remember" className="text-sm text-gray-600">
+                            <input
+                                id="remember"
+                                type="checkbox"
+                                name="remember"
+                                className="form-checkbox"
+                            />
+                            <span className="ml-2">Se souvenir de moi</span>
+                        </label>
+                    </div>
+
+                    <div className="text-sm">
+                        <Link
+                            href="/password/reset"
+                            className="text-indigo-600 hover:text-indigo-900"
+                        >
+                            Mot de passe oublié ?
+                        </Link>
+                    </div>
                 </div>
 
-                <div className="mt-4 flex items-center justify-end gap-2">
-                    {canResetPassword && (
-                        <Link
-                            href={route('password.request')}
-                            className="rounded-md text-sm text-indigo-600 underline hover:text-gray-900 focus:outline-none"
-                        >
-                            Mot de passe oublié?
-                        </Link>
-                    )}
-                    <Link
-                            href={'register'+ (redirectUrl != '/dashboard' ? '?redirect_url='+redirectUrl : '')}
-                            className="rounded-md text-sm text-indigo-600 underline hover:text-gray-900 focus:outline-none "
-                        >
-                            Pas encore inscrit ?
-                        </Link>
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Se Connecter
+                <div className="mt-6">
+                    <PrimaryButton className="w-full" disabled={processing}>
+                        Se connecter
                     </PrimaryButton>
+                </div>
+
+                <div className="mt-4 text-center">
+                    <p className="text-sm text-gray-600">
+                        Vous n'avez pas de compte ?{' '}
+                        <Link href={'/register' + (redirectUrl !== '/dashboard' ? '?redirect_url=' + redirectUrl : '')} className="text-indigo-600 hover:text-indigo-900">
+                            Créez un compte
+                        </Link>
+                    </p>
                 </div>
             </form>
         </GuestLayout>

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\Profile;
-use App\Models\UserGroup;
+use App\Models\TableGlobal;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
@@ -41,7 +41,17 @@ class AuthenticatedSessionController extends Controller
             // Récupérer l'utilisateur connecté
             $user = Auth::user();
             $profile = Profile::where("user_id", $user->id)->first();
-            $userGroup = UserGroup::where("id", $user->group_id)->first();
+            $userGroup = TableGlobal::where("id", $user->role_id)->first();
+            $service = TableGlobal::where("id", $profile->service_id)->first();
+            $filiere = TableGlobal::where("id", $profile->filiere_id)->first();
+
+            // dd($userGroup);
+
+            if ($service == null) {
+                $miscellaneous = $filiere->data_cat;
+            } else {
+                $miscellaneous = $service->data_cat;
+            }
 
             // Générer un token Sanctum
             $token = $user->createToken('auth_token')->plainTextToken;
@@ -55,27 +65,35 @@ class AuthenticatedSessionController extends Controller
                 'user' => json_encode([
                     'id' => $user->id,
                     'email' => $user->email,
-                    'profile_name' => $profile->name,
+                    'profile_firstname' => $profile->firstname,
+                    'profile_lastname' => $profile->lastname,
                     'profile_tel' => $profile->tel,
-                    'group' => $userGroup->name,
+                    'group' => $userGroup->data_cat,
+                    'miscellaneous' => $miscellaneous
                 ]),
             ]);
 
             // Ajouter les paramètres à l'URL de redirection
             $fullRedirectUrl = $redirectUrl . '?' . $queryParams;
 
-             return Inertia::render('Dashboard', [
-                 'user' => [
-                     'id' => $user->id,
-                     'email' => $user->email,
-                     'profile_name' => $profile->name,
-                     'profile_tel' => $profile->tel,
-                     'group' => $userGroup->name,
-                 ],
-                 'access_token' => $token,
-                 'token_type' => 'Bearer',
-                 'redirectUrl' => $fullRedirectUrl, // Passer l'URL de redirection au frontend
-            ]);
+            if($redirectUrl != null && $redirectUrl != 'undefined' && $redirectUrl != '/undefined' && $redirectUrl != 'dashboard' && $redirectUrl != '/dashboard'){
+                return redirect()->intended($fullRedirectUrl);
+             }else{
+                return Inertia::render('Dashboard', [
+                    'user' => [
+                        'id' => $user->id,
+                       'email' => $user->email,
+                       'profile_firstname' => $profile->firstname,
+                       'profile_lastname' => $profile->lastname,
+                       'profile_tel' => $profile->tel,
+                       'group' => $userGroup->data_cat,
+                       'miscellaneous' => $miscellaneous
+                    ],
+                    'access_token' => $token,
+                    'token_type' => 'Bearer',
+                    'redirectUrl' => $fullRedirectUrl, // Passer l'URL de redirection au frontend
+               ]);
+             }
         }
 
         // Si l'authentification échoue

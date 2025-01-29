@@ -10,20 +10,34 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasFactory, HasApiTokens, Notifiable;
 
+    // Table associée
+    protected $table = 'users';
+
+    // Colonnes à remplir
     protected $fillable = [
-        'group_id', 'email', 'password',
+        'role_id', 'email', 'password', 'remember_token', 'created_at', 'updated_at'
     ];
 
+    // Colonnes non modifiables
+    protected $guarded = ['id'];
+
+    // Hashing du mot de passe lors de l'insertion
     protected $hidden = [
         'password', 'remember_token',
     ];
 
-    public function group()
-    {
-        return $this->belongsTo(UserGroup::class, 'group_id');
-    }
+    // Format des dates
+    protected $dates = [
+        'created_at', 'updated_at',
+    ];
+
+    // Définir les types de données pour certaines colonnes
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
 
     public function profile()
     {
